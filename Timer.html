@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Timer</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .timer-container {
+            text-align: center;
+        }
+
+        #timerDisplay {
+            font-size: 45px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: black;
+        }
+
+        input, label {
+            font-size: 15px;
+            color: gray;
+        }
+
+        input[type="number"] {
+            width: 50px;
+            text-align: center;
+        }
+
+        button {
+            font-size: 15px;
+            margin-top: 10px;
+            background-color: lightblue;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: deepskyblue;
+        }
+    </style>
+</head>
+<body>
+    <div class="timer-container">
+        <h1>🕛 Timer 🕝</h1>
+        
+        <label for="hours">Hours: </label>
+        <input type="number" id="hours" min="0" value="0"> 
+        
+        <label for="minutes">Minutes: </label>
+        <input type="number" id="minutes" min="0" max="59" value="0">
+        
+        <label for="seconds">Seconds: </label>
+        <input type="number" id="seconds" min="0" max="59" value="0">
+        
+        <br>
+        <button id="startButton" onclick="startTimer()">Start</button>
+        <button id="pauseButton" onclick="pauseOrRestartTimer()">Pause</button>
+        <button onclick="resetTimer()">Reset</button>
+        
+        <p id="timerDisplay">00:00:00</p>
+        <audio id="alarm" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+    </div>
+
+    <script>
+        let timeRemaining;
+        let startTime;
+        let timerInterval;
+        let isPaused = false;
+        let initialTimeRemaining;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+        });
+
+        function startTimer() {
+            clearInterval(timerInterval);
+
+            if (isPaused) {
+                isPaused = false;
+                startTime = new Date().getTime() - (initialTimeRemaining - timeRemaining) * 1000;
+                timerInterval = setInterval(updateTimer, 1000);
+                document.getElementById('pauseButton').textContent = "Pause";
+                return;
+            }
+
+            let hours = parseInt(document.getElementById('hours').value);
+            let minutes = parseInt(document.getElementById('minutes').value);
+            let seconds = parseInt(document.getElementById('seconds').value);
+
+            timeRemaining = (hours * 3600) + (minutes * 60) + seconds;
+            initialTimeRemaining = timeRemaining;
+            startTime = new Date().getTime();
+
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function pauseOrRestartTimer() {
+            if (isPaused) {
+                startTimer();
+            } else {
+                pauseTimer();
+            }
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            isPaused = true;
+            document.getElementById('pauseButton').textContent = "Restart Timer";
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isPaused = false;
+            document.getElementById('hours').value = 0;
+            document.getElementById('minutes').value = 0;
+            document.getElementById('seconds').value = 0;
+            document.getElementById('timerDisplay').textContent = "00:00:00";
+            document.getElementById('timerDisplay').style.color = "black";
+            document.getElementById('timerDisplay').style.fontWeight = "bold";
+            document.getElementById('pauseButton').textContent = "Pause Timer";
+        }
+
+        function showNotification() {
+            if (Notification.permission === "granted") {
+                new Notification("Time's up!", {
+                    body: "Your custom timer has finished.",
+                    icon: 'https://www.iconfinder.com/data/icons/notification-1/24/alarm-notification-time-timer-clock-512.png'
+                });
+            }
+        }
+
+        function updateTimer() {
+            const currentTime = new Date().getTime();
+            const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+
+            timeRemaining = initialTimeRemaining - elapsedTime;
+
+            if (timeRemaining <= 0) {
+                timeRemaining = 0;
+                document.getElementById('alarm').play();
+                showNotification();
+                clearInterval(timerInterval);
+            }
+
+            let hours = Math.floor(timeRemaining / 3600);
+            let minutes = Math.floor((timeRemaining % 3600) / 60);
+            let seconds = timeRemaining % 60;
+
+            document.getElementById('timerDisplay').textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            if (timeRemaining <= 600) {
+                document.getElementById('timerDisplay').style.color = "red";
+            } else {
+                document.getElementById('timerDisplay').style.color = "black";
+            }
+        }
+    </script>
+</body>
+</html>
